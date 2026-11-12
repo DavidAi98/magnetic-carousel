@@ -362,7 +362,7 @@ function fieldAt(position) {
   
       // 当前装置有固定间隙；如果间隙被改得极小，停止计算
       if (distance < 1e-6) {
-        throw new Error("球与磁偶极子距离过小，请增大板的高度");
+        throw new Error(t("tooClose"));
       }
   
       const direction = offset.multiplyScalar(1 / distance);
@@ -419,6 +419,8 @@ function fieldAt(position) {
   
   window.addEventListener("keydown", (event) => {
     if (event.code === "Space") {
+      if (event.target instanceof HTMLElement &&
+          event.target.closest('input, select, button, textarea, [contenteditable]')) return;
       event.preventDefault();
   
       // 避免长按空格时反复切换
@@ -451,61 +453,88 @@ overflow-y: auto;
 `;
 
 panel.innerHTML = `
-  <b>Magnetic carousel · 装置模型</b>
-  <p>红色 N 极 / 蓝色 S 极</p>
-  <label>
-    转速：<span id="rpmValue">20</span> RPM
-    <br>
-    <input id="speed" type="range"
-      min="-60" max="60" step="1" value="20">
-  </label>
-  <p>
-  <label>
-    磁铁数量：<span id="countValue">8</span>
-    <br>
-    <input id="count" type="range"
-      min="2" max="16" step="2" value="8">
-  </label>
-</p>
-
-<p>
-  <label>
-    分布半径：<span id="radiusValue">2.00</span>
-    <br>
-    <input id="radius" type="range"
-      min="0.8" max="2.7" step="0.05" value="2">
-  </label>
-</p>
-
-<p>
-  <label>
-    分布范围：<span id="angleValue">360</span>°
-    <br>
-    <input id="angle" type="range"
-      min="60" max="360" step="10" value="360">
-  </label>
-</p>
-<p>
-  <label>
-    磁铁磁矩：<span id="momentValue">0.30</span> A·m²
-    <br>
-    <input id="moment" type="range"
-      min="0" max="1" step="0.01" value="0.3">
-  </label>
-</p>
-<div style="line-height: 1.6; margin-top: 10px;">
-  <b>受力大小 / N</b>
-  <div style="color:#ff5555">磁力：<span id="magneticForceValue">0</span></div>
-  <div style="color:#ffaa33">阻尼：<span id="dragForceValue">0</span></div>
-  <div style="color:#4488ff">重力：<span id="gravityForceValue">0</span></div>
-  <div style="color:#55dd88">支持力：<span id="normalForceValue">0</span></div>
-  <div style="color:#ffff55">合力：<span id="netForceValue">0</span></div>
-</div>
-  <p><button id="reset">重置钢球</button></p>
-  <small>拖动旋转视角 · 滚轮缩放<br>磁力吸引模型 · 空格重置钢球</small>
-`;
+  <p><label><span data-i18n="language"></span>: <select id="language"><option value="zh">中文</option><option value="en">English</option></select></label></p>
+  <b data-i18n="title"></b>
+  <p data-i18n="poles"></p>
+<p><label><span data-i18n="speed"></span>: <span id="rpmValue">20</span> RPM<br><input id="speed" type="range" min="-60" max="60" step="1" value="20"></label></p>
+<p><label><span data-i18n="count"></span>: <span id="countValue">8</span> <br><input id="count" type="range" min="2" max="16" step="2" value="8"></label></p>
+<p><label><span data-i18n="radius"></span>: <span id="radiusValue">2.00</span> <br><input id="radius" type="range" min="0.8" max="2.7" step="0.05" value="2.00"></label></p>
+<p><label><span data-i18n="angle"></span>: <span id="angleValue">360</span> °<br><input id="angle" type="range" min="60" max="360" step="10" value="360"></label></p>
+<p><label><span data-i18n="moment"></span>: <span id="momentValue">0.30</span> A·m²<br><input id="moment" type="range" min="0" max="1" step="0.01" value="0.30"></label></p>
+<div style="line-height:1.6"><b data-i18n="forces"></b><div style="color:#ff5555"><span data-i18n="magnetic"></span>: <span id="magneticForceValue">0</span></div><div style="color:#ffaa33"><span data-i18n="drag"></span>: <span id="dragForceValue">0</span></div><div style="color:#4488ff"><span data-i18n="gravity"></span>: <span id="gravityForceValue">0</span></div><div style="color:#55dd88"><span data-i18n="normal"></span>: <span id="normalForceValue">0</span></div><div style="color:#ffff55"><span data-i18n="net"></span>: <span id="netForceValue">0</span></div></div><p><button id="reset" data-i18n="reset"></button> · <span id="runStatus"></span></p><small><span data-i18n="mouse"></span><br><span data-i18n="keyboard"></span><br><span data-i18n="model"></span></small>`;
 
 document.body.appendChild(panel);
+const translations = {
+  "zh": {
+    "title": "磁力转盘 · 装置模型",
+    "poles": "红色 N 极 / 蓝色 S 极",
+    "speed": "转速",
+    "count": "磁铁数量",
+    "radius": "分布半径",
+    "angle": "分布范围",
+    "moment": "磁铁磁矩",
+    "forces": "受力大小 / N",
+    "magnetic": "磁力",
+    "drag": "阻尼",
+    "gravity": "重力",
+    "normal": "支持力",
+    "net": "合力（参考）",
+    "reset": "重置钢球",
+    "mouse": "左键平移 · 右键旋转 · 滚轮缩放",
+    "keyboard": "空格暂停 / 继续 · 按钮重置钢球",
+    "model": "简化模型：不含球体自转、接触摩擦及磁滞",
+    "running": "运行中",
+    "paused": "已暂停",
+    "language": "语言",
+    "tooClose": "球与磁偶极子距离过小，请增大板的高度",
+    "lift": "钢球可能脱离板面，当前固定高度模型不适用。",
+    "edge": "钢球已离开板面范围，请点击按钮重置。"
+  },
+  "en": {
+    "title": "Magnetic Carousel · Simulation",
+    "poles": "Red: North pole / Blue: South pole",
+    "speed": "Rotation speed",
+    "count": "Magnet count",
+    "radius": "Arrangement radius",
+    "angle": "Angular span",
+    "moment": "Magnetic moment",
+    "forces": "Force magnitudes / N",
+    "magnetic": "Magnetic force",
+    "drag": "Damping force",
+    "gravity": "Weight",
+    "normal": "Normal force",
+    "net": "Net force (reference)",
+    "reset": "Reset ball",
+    "mouse": "Left drag: pan · Right drag: rotate · Scroll: zoom",
+    "keyboard": "Space: pause / resume · Button: reset ball",
+    "model": "Simplified model: no ball rotation, contact friction or hysteresis",
+    "running": "Running",
+    "paused": "Paused",
+    "language": "Language",
+    "tooClose": "Ball too close to a magnetic dipole; increase the plate height.",
+    "lift": "Ball may lose contact; the fixed-height model no longer applies.",
+    "edge": "Ball has left the plate; click the reset button."
+  }
+};
+let currentLanguage = "zh";
+function t(key) { return translations[currentLanguage][key] ?? key; }
+function updateRunStatus() {
+  document.getElementById("runStatus").textContent = t(paused ? "paused" : "running");
+}
+function setLanguage(language) {
+  currentLanguage = translations[language] ? language : "zh";
+  panel.querySelectorAll("[data-i18n]").forEach(element => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  document.getElementById("language").value = currentLanguage;
+  document.documentElement.lang = currentLanguage === "zh" ? "zh-CN" : "en";
+  document.title = t("title");
+  updateRunStatus();
+}
+document.getElementById("language").addEventListener("change", event => {
+  setLanguage(event.target.value);
+});
+setLanguage("zh");
 
 const forceValueElements = {
     magnetic: document.getElementById("magneticForceValue"),
@@ -592,7 +621,7 @@ if (requiredNormal < 0) {
   paused = true;
 
 
-  console.warn("钢球可能脱离板面，当前固定高度模型不适用。");
+  console.warn(t("lift"));
 
   forces.normal.set(0, 0, 0);
   forces.drag.copy(ballVelocity).multiplyScalar(-dragCoefficient);
@@ -634,7 +663,7 @@ forces.net.copy(forces.magnetic)
 
   if (Math.hypot(ballPosition.x, ballPosition.z) > plateRadius) {
     paused = true;
-    console.warn("钢球已离开板面范围，请按空格重置。");
+    console.warn(t("edge"));
   }
 }
 
@@ -666,6 +695,7 @@ function animate(timeMs) {
     updateForceArrows();       // 钢球上的受力箭头
     updateIsolatedDiagram();  // 系统上方的独立受力图
     updateForcePanel();       // 面板数值
+    updateRunStatus();
 
   controls.update();
   renderer.render(scene, camera);
